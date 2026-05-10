@@ -1,0 +1,69 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USER=developer
+ENV PASSWORD=developer
+ENV DISPLAY=:1
+ENV VNC_PORT=5901
+ENV NOVNC_PORT=6901
+ENV RESOLUTION=1440x900
+ENV DEPTH=24
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xfce4-panel \
+    xfdesktop4 \
+    xfwm4 \
+    xfce4-session \
+    xfce4-terminal \
+    thunar \
+    dbus-x11 \
+    x11-xserver-utils \
+    tigervnc-standalone-server \
+    tigervnc-common \
+    tigervnc-tools \
+    novnc \
+    websockify \
+    sudo \
+    curl \
+    ca-certificates \
+    fonts-dejavu \
+    xfce4-settings \
+    xfce4-appfinder \
+    mousepad \
+    xarchiver \
+    zip \
+    unzip \
+    git \
+    openssh-client \
+    vim-tiny \
+    less \
+    htop \
+    procps \
+    psmisc \
+    iputils-ping \
+    net-tools \
+    file \
+    tree \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --shell /bin/bash ${USER} \
+    && echo "${USER}:${PASSWORD}" | chpasswd \
+    && usermod -aG sudo ${USER}
+
+RUN printf "\n# Safer file commands\nalias rm='rm -i'\nalias mv='mv -i'\nalias cp='cp -i'\n" >> /home/${USER}/.bashrc \
+    && chown ${USER}:${USER} /home/${USER}/.bashrc
+
+RUN mkdir -p /source \
+    && chown ${USER}:${USER} /source
+
+COPY scripts/startup_xfce.sh /startup.sh
+RUN chmod +x /startup.sh
+
+USER ${USER}
+WORKDIR /source
+
+EXPOSE 5901 6901
+
+CMD ["/startup.sh"]

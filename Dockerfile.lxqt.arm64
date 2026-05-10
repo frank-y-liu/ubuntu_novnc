@@ -1,0 +1,84 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USER=developer
+ENV PASSWORD=developer
+ENV DISPLAY=:1
+ENV VNC_PORT=5901
+ENV NOVNC_PORT=6901
+ENV RESOLUTION=1600x900
+ENV DEPTH=24
+ENV SHELL=/bin/bash
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    lxqt-core \
+    lxqt-session \
+    lxqt-panel \
+    lxqt-config \
+    pcmanfm-qt \
+    qterminal \
+    openbox \
+    dbus-x11 \
+    x11-xserver-utils \
+    tigervnc-standalone-server \
+    tigervnc-common \
+    tigervnc-tools \
+    novnc \
+    websockify \
+    sudo \
+    curl \
+    wget \
+    ca-certificates \
+    fonts-dejavu \
+    zip \
+    unzip \
+    tar \
+    git \
+    openssh-client \
+    vim-tiny \
+    less \
+    htop \
+    procps \
+    psmisc \
+    iputils-ping \
+    net-tools \
+    file \
+    tree \
+    bash-completion \
+    man-db \
+    manpages \
+    locales \
+    tzdata \
+    rsync \
+    screen \
+    tmux \
+    strace \
+    build-essential \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --shell /bin/bash ${USER} \
+    && echo "${USER}:${PASSWORD}" | chpasswd \
+    && usermod -aG sudo ${USER}
+
+# Safer file-operation aliases for interactive bash
+RUN printf "\n# Safer file commands\nalias rm='rm -i'\nalias mv='mv -i'\nalias cp='cp -i'\n" >> /home/${USER}/.bashrc \
+    && chown ${USER}:${USER} /home/${USER}/.bashrc
+
+# Prepare mount point for current host folder
+RUN mkdir -p /source \
+    && chown ${USER}:${USER} /source
+
+COPY scripts/startup_lxqt.sh /startup.sh
+RUN chmod +x /startup.sh
+
+USER ${USER}
+WORKDIR /source
+
+EXPOSE 5901 6901
+
+CMD ["/startup.sh"]
